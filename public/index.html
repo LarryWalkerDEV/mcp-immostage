@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImmoStage MCP Server</title>
+  <meta name="description" content="AI virtual staging MCP server for real estate. Stage rooms, beautify floor plans, classify images.">
+  <link rel="canonical" href="https://immostage.ai">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e5e5e5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 600px; padding: 2rem; text-align: center; }
+    h1 { font-size: 2rem; margin-bottom: 1rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p { color: #a3a3a3; line-height: 1.6; margin-bottom: 1.5rem; }
+    code { background: #1a1a2e; padding: 0.2em 0.5em; border-radius: 4px; font-size: 0.9em; color: #60a5fa; }
+    .endpoint { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 1rem; margin: 1.5rem 0; text-align: left; font-family: monospace; font-size: 0.85rem; color: #a78bfa; }
+    a { color: #60a5fa; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .tools { text-align: left; margin: 1.5rem 0; }
+    .tools li { padding: 0.3rem 0; color: #a3a3a3; }
+    .tools strong { color: #e5e5e5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ImmoStage MCP Server</h1>
+    <p>AI-powered virtual staging for real estate professionals via the <a href="https://modelcontextprotocol.io" rel="noopener">Model Context Protocol</a>.</p>
+
+    <div class="endpoint">POST https://mcp.immostage.ai/api/mcp</div>
+
+    <ul class="tools">
+      <li><strong>stage_room</strong> &mdash; AI virtual staging for empty rooms</li>
+      <li><strong>beautify_floor_plan</strong> &mdash; 2D to 3D floor plan rendering</li>
+      <li><strong>classify_room</strong> &mdash; Room type + style detection</li>
+      <li><strong>optimize_listing</strong> &mdash; German property descriptions</li>
+      <li><strong>suggest_style</strong> &mdash; Staging style recommendations</li>
+    </ul>
+
+    <p>
+      <a href="https://github.com/LarryWalkerDEV/mcp-immostage">GitHub</a> &middot;
+      <a href="https://immostage.ai">ImmoStage Homepage</a> &middot;
+      <a href="mailto:goerz@immostage.ai">Get API Key</a>
+    </p>
+  </div>
+</body>
+</html>

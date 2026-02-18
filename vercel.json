@@ -1,9 +1,14 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/mcp.ts": {
       "maxDuration": 120
     }
   },
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/api/mcp",
