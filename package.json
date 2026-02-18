@@ -1,0 +1,44 @@
+{
+  "name": "mcp-immostage",
+  "version": "1.0.0",
+  "description": "MCP Server for AI Virtual Staging - stage rooms, beautify floor plans, classify images, optimize listings",
+  "type": "module",
+  "main": "dist/transport.js",
+  "scripts": {
+    "dev": "tsx src/transport.ts",
+    "build": "tsc",
+    "start": "node dist/transport.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "virtual-staging",
+    "real-estate",
+    "PropTech",
+    "immobilien",
+    "floor-plan",
+    "ai-staging"
+  ],
+  "author": "ImmoStage <goerz@immostage.ai>",
+  "license": "MIT",
+  "homepage": "https://immostage.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/immostage/mcp-immostage"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.34.3",
+    "express": "^4.21.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.12.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

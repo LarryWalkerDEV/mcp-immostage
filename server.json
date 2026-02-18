@@ -1,0 +1,88 @@
+{
+  "name": "immostage-virtual-staging",
+  "display_name": "ImmoStage Virtual Staging",
+  "description": "AI-powered virtual staging for real estate. Stage empty rooms, beautify floor plans, classify room images, and generate property descriptions.",
+  "version": "1.0.0",
+  "author": {
+    "name": "ImmoStage",
+    "url": "https://immostage.ai",
+    "email": "goerz@immostage.ai"
+  },
+  "homepage": "https://immostage.ai",
+  "repository": "https://github.com/immostage/mcp-immostage",
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://mcp.immostage.ai/api/mcp"
+  },
+  "authentication": {
+    "type": "api-key",
+    "header": "Authorization",
+    "scheme": "Bearer"
+  },
+  "tools": [
+    {
+      "name": "stage_room",
+      "description": "AI virtual staging - transform empty room photos into beautifully furnished spaces",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "beautify_floor_plan",
+      "description": "Transform 2D floor plans into stunning 3D isometric architectural renders",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "classify_room",
+      "description": "Classify room images - detect room type, empty/furnished status, and suggest staging style",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "optimize_listing",
+      "description": "Generate professional German property descriptions from basic listing data",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "suggest_style",
+      "description": "Get AI-powered staging style recommendations based on room type and target audience",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ],
+  "keywords": [
+    "real-estate",
+    "virtual-staging",
+    "PropTech",
+    "immobilien",
+    "floor-plan",
+    "ai-staging",
+    "mcp-server"
+  ],
+  "categories": [
+    "real-estate",
+    "image-processing",
+    "ai"
+  ]
+}
