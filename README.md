@@ -29,7 +29,7 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Get your API key at [immostage.ai/developer](https://immostage.ai/developer).
+Contact [goerz@immostage.ai](mailto:goerz@immostage.ai) for API access.
 
 ## Tools
 
@@ -89,7 +89,7 @@ All requests require a Bearer token in the Authorization header:
 Authorization: Bearer YOUR_API_KEY
 ```
 
-API keys are available at [immostage.ai/developer](https://immostage.ai/developer). Free tier includes 10 staging credits for testing.
+Contact [goerz@immostage.ai](mailto:goerz@immostage.ai) for API access. Free tier includes 10 staging credits for testing.
 
 ## Rate Limits
 
@@ -100,9 +100,6 @@ API keys are available at [immostage.ai/developer](https://immostage.ai/develope
 ## Links
 
 - [ImmoStage Homepage](https://immostage.ai) — AI Virtual Staging Platform
-- [Documentation](https://immostage.ai/docs) — Full API Documentation
-- [Pricing](https://immostage.ai/preise) — Plans & Pricing
-- [Get API Key](https://immostage.ai/developer) — Developer Portal
 - [GitHub](https://github.com/LarryWalkerDEV/mcp-immostage) — Source Code
 
 ## License
