@@ -25,7 +25,7 @@
   "homepage": "https://immostage.ai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/immostage/mcp-immostage"
+    "url": "https://github.com/LarryWalkerDEV/mcp-immostage"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",

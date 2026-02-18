@@ -9,7 +9,7 @@
     "email": "goerz@immostage.ai"
   },
   "homepage": "https://immostage.ai",
-  "repository": "https://github.com/immostage/mcp-immostage",
+  "repository": "https://github.com/LarryWalkerDEV/mcp-immostage",
   "transport": {
     "type": "streamable-http",
     "url": "https://mcp.immostage.ai/api/mcp"

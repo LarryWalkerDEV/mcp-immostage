@@ -103,7 +103,7 @@ API keys are available at [immostage.ai/developer](https://immostage.ai/develope
 - [Documentation](https://immostage.ai/docs) — Full API Documentation
 - [Pricing](https://immostage.ai/preise) — Plans & Pricing
 - [Get API Key](https://immostage.ai/developer) — Developer Portal
-- [GitHub](https://github.com/immostage/mcp-immostage) — Source Code
+- [GitHub](https://github.com/LarryWalkerDEV/mcp-immostage) — Source Code
 
 ## License
 
