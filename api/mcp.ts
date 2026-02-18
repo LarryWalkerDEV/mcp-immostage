@@ -5,7 +5,7 @@ import { validateApiKey } from '../src/middleware/auth.js';
 import { checkRateLimit } from '../src/lib/rate-limit.js';
 
 export const config = {
-  maxDuration: 120, // 2 minutes for staging tasks
+  maxDuration: 120,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -25,27 +25,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  // Auth check
-  const auth = validateApiKey(req.headers.authorization as string | undefined);
-  if (!auth.valid) {
-    res.status(401).json({ error: auth.error });
-    return;
+  try {
+    // Auth check
+    const auth = validateApiKey(req.headers.authorization as string | undefined);
+    if (!auth.valid) {
+      res.status(401).json({ error: auth.error });
+      return;
+    }
+
+    // Rate limit check (skip if Redis not configured)
+    try {
+      const rateLimit = await checkRateLimit(auth.apiKey!);
+      if (!rateLimit.allowed) {
+        const retryAfter = Math.ceil((rateLimit.reset - Date.now()) / 1000);
+        res.status(429).json({ error: 'Rate limit exceeded', retryAfter });
+        return;
+      }
+    } catch (rateLimitError) {
+      // Fail open if rate limiting is misconfigured
+      console.warn('Rate limit check failed, allowing request:', rateLimitError);
+    }
+
+    // Create stateless MCP server + transport
+    const server = createServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    console.error('MCP handler error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
-
-  // Rate limit check
-  const rateLimit = await checkRateLimit(auth.apiKey!);
-  if (!rateLimit.allowed) {
-    const retryAfter = Math.ceil((rateLimit.reset - Date.now()) / 1000);
-    res.status(429).json({ error: 'Rate limit exceeded', retryAfter });
-    return;
-  }
-
-  // Create stateless MCP server + transport
-  const server = createServer();
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-
-  await server.connect(transport);
-  await transport.handleRequest(req, res, req.body);
 }
