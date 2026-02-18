@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.larrywalkerdev/immostage",
+  "name": "io.github.LarryWalkerDEV/immostage",
   "title": "ImmoStage Virtual Staging",
-  "description": "AI-powered virtual staging for real estate. Stage empty rooms, beautify floor plans into 3D renders, classify room images, and generate German property descriptions.",
+  "description": "AI virtual staging for real estate — stage rooms, beautify floor plans, classify images.",
   "version": "1.0.0",
   "repository": {
     "url": "https://github.com/LarryWalkerDEV/mcp-immostage",
