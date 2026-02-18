@@ -1,6 +1,7 @@
 {
   "name": "mcp-immostage",
   "version": "1.0.0",
+  "mcpName": "io.github.larrywalkerdev/immostage",
   "description": "MCP Server for AI Virtual Staging - stage rooms, beautify floor plans, classify images, optimize listings",
   "type": "module",
   "main": "dist/transport.js",
