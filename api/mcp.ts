@@ -26,24 +26,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Auth check
-    const auth = validateApiKey(req.headers.authorization as string | undefined);
-    if (!auth.valid) {
-      res.status(401).json({ error: auth.error });
-      return;
-    }
-
-    // Rate limit check (skip if Redis not configured)
-    try {
-      const rateLimit = await checkRateLimit(auth.apiKey!);
-      if (!rateLimit.allowed) {
-        const retryAfter = Math.ceil((rateLimit.reset - Date.now()) / 1000);
-        res.status(429).json({ error: 'Rate limit exceeded', retryAfter });
+    // Auth check (optional — skip if no Authorization header provided)
+    const authHeader = req.headers.authorization as string | undefined;
+    if (authHeader) {
+      const auth = validateApiKey(authHeader);
+      if (!auth.valid) {
+        res.status(401).json({ error: auth.error });
         return;
       }
-    } catch (rateLimitError) {
-      // Fail open if rate limiting is misconfigured
-      console.warn('Rate limit check failed, allowing request:', rateLimitError);
+
+      // Rate limit check (skip if Redis not configured)
+      try {
+        const rateLimit = await checkRateLimit(auth.apiKey!);
+        if (!rateLimit.allowed) {
+          const retryAfter = Math.ceil((rateLimit.reset - Date.now()) / 1000);
+          res.status(429).json({ error: 'Rate limit exceeded', retryAfter });
+          return;
+        }
+      } catch (rateLimitError) {
+        console.warn('Rate limit check failed, allowing request:', rateLimitError);
+      }
     }
 
     // Create stateless MCP server + transport
