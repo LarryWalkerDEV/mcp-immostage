@@ -8,6 +8,7 @@ import {
 } from '../lib/kie-client.js';
 import { uploadBase64Image } from '../lib/image-upload.js';
 import { FLOOR_PLAN_PROMPT } from '../lib/prompts.js';
+import { fetchImageAsBase64 } from '../lib/image-to-base64.js';
 
 export function registerFloorPlan(server: McpServer) {
   server.tool(
@@ -61,17 +62,30 @@ export function registerFloorPlan(server: McpServer) {
         }
 
         const resultUrls = parseResultUrls(status);
-        return {
-          content: [{
-            type: 'text' as const,
-            text: JSON.stringify({
-              taskId,
-              resultUrls,
-              quality,
-              processingTimeMs: Date.now() - startTime,
-            }),
-          }],
+        const textContent = {
+          type: 'text' as const,
+          text: JSON.stringify({
+            taskId,
+            resultUrls,
+            quality,
+            processingTimeMs: Date.now() - startTime,
+          }),
         };
+
+        // Try to fetch the first result image and return it inline as base64
+        const contentBlocks: Array<{ type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }> = [textContent];
+        if (resultUrls.length > 0) {
+          const inlineImage = await fetchImageAsBase64(resultUrls[0]);
+          if (inlineImage) {
+            contentBlocks.push({
+              type: 'image' as const,
+              data: inlineImage.data,
+              mimeType: inlineImage.mimeType,
+            });
+          }
+        }
+
+        return { content: contentBlocks };
       } catch (error) {
         const errorType = categorizeKieError(error as Error);
         return {
