@@ -1,46 +1,163 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImmoStage MCP Server</title>
-  <meta name="description" content="AI virtual staging MCP server for real estate. Stage rooms, beautify floor plans, classify images.">
-  <link rel="canonical" href="https://immostage.ai">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e5e5e5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { max-width: 600px; padding: 2rem; text-align: center; }
-    h1 { font-size: 2rem; margin-bottom: 1rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    p { color: #a3a3a3; line-height: 1.6; margin-bottom: 1.5rem; }
-    code { background: #1a1a2e; padding: 0.2em 0.5em; border-radius: 4px; font-size: 0.9em; color: #60a5fa; }
-    .endpoint { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 1rem; margin: 1.5rem 0; text-align: left; font-family: monospace; font-size: 0.85rem; color: #a78bfa; }
-    a { color: #60a5fa; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .tools { text-align: left; margin: 1.5rem 0; }
-    .tools li { padding: 0.3rem 0; color: #a3a3a3; }
-    .tools strong { color: #e5e5e5; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImmoStage MCP Server — Upload & Tools</title>
+<meta name="description" content="AI virtual staging MCP server for real estate. Stage rooms, beautify floor plans, classify images.">
+<link rel="canonical" href="https://immostage.ai">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e5e5e5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .container { max-width: 580px; width: 100%; padding: 2rem; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+  .tagline { color: #888; text-align: center; margin-bottom: 2rem; font-size: 0.9rem; }
+  .section { margin-bottom: 2rem; }
+  h2 { font-size: 1rem; color: #a78bfa; margin-bottom: 0.75rem; }
+  .endpoint { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 0.75rem 1rem; font-family: monospace; font-size: 0.85rem; color: #a78bfa; margin-bottom: 1rem; }
+  .tools { list-style: none; }
+  .tools li { padding: 0.35rem 0; color: #a3a3a3; font-size: 0.9rem; }
+  .tools strong { color: #e5e5e5; }
+  a { color: #60a5fa; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .links { text-align: center; color: #666; font-size: 0.85rem; }
+  .links a { margin: 0 0.5rem; }
+
+  /* Upload section */
+  .dropzone { border: 2px dashed #333; border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .dropzone:hover, .dropzone.active { border-color: #4f8; background: rgba(68,255,136,0.03); }
+  .dropzone .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .dropzone p { color: #666; font-size: 0.8rem; margin-top: 0.25rem; }
+  input[type="file"] { display: none; }
+  .preview { margin-top: 1rem; display: none; }
+  .preview.show { display: block; }
+  .preview img { max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid #333; }
+  .loading { margin-top: 1rem; text-align: center; display: none; color: #888; font-size: 0.9rem; }
+  .loading.show { display: block; }
+  .error { color: #f66; margin-top: 0.75rem; display: none; font-size: 0.9rem; }
+  .error.show { display: block; }
+  .result { margin-top: 1rem; display: none; }
+  .result.show { display: block; }
+  .url-box { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem; word-break: break-all; color: #4f8; cursor: pointer; }
+  .url-box:hover { background: #222; }
+  .copied { color: #4f8; font-size: 0.8rem; margin-top: 0.5rem; display: none; text-align: center; }
+  .hint { background: #111; border: 1px solid #222; border-radius: 8px; padding: 1rem; margin-top: 1rem; font-size: 0.8rem; color: #888; line-height: 1.6; }
+  .hint em { color: #a3a3a3; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>ImmoStage MCP Server</h1>
-    <p>AI-powered virtual staging for real estate professionals via the <a href="https://modelcontextprotocol.io" rel="noopener">Model Context Protocol</a>.</p>
+<div class="container">
+  <h1>ImmoStage MCP Server</h1>
+  <p class="tagline">AI virtual staging for real estate via <a href="https://modelcontextprotocol.io" rel="noopener">Model Context Protocol</a></p>
 
-    <div class="endpoint">POST https://mcp.immostage.ai/api/mcp</div>
-
-    <ul class="tools">
-      <li><strong>stage_room</strong> &mdash; AI virtual staging for empty rooms</li>
-      <li><strong>beautify_floor_plan</strong> &mdash; 2D to 3D floor plan rendering</li>
-      <li><strong>classify_room</strong> &mdash; Room type + style detection</li>
-      <li><strong>optimize_listing</strong> &mdash; German property descriptions</li>
-      <li><strong>suggest_style</strong> &mdash; Staging style recommendations</li>
-    </ul>
-
-    <p>
-      <a href="https://github.com/LarryWalkerDEV/mcp-immostage">GitHub</a> &middot;
-      <a href="https://immostage.ai">ImmoStage Homepage</a> &middot;
-      <a href="mailto:goerz@immostage.ai">Get API Key</a>
-    </p>
+  <!-- Upload Section -->
+  <div class="section">
+    <h2>Bild hochladen</h2>
+    <div class="dropzone" id="dropzone">
+      <div class="icon">📸</div>
+      <strong>Bild hierher ziehen</strong>
+      <p>oder klicken zum Auswaehlen (max. 10 MB)</p>
+    </div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+    <div class="preview" id="preview"><img id="previewImg" alt="Vorschau"></div>
+    <div class="loading" id="loading">Wird hochgeladen...</div>
+    <div class="error" id="error"></div>
+    <div class="result" id="result">
+      <div class="url-box" id="urlBox" title="Klicken zum Kopieren"></div>
+      <div class="copied" id="copied">Kopiert!</div>
+    </div>
+    <div class="hint">
+      <strong>So geht's:</strong> Bild hochladen → URL kopieren → in Claude Desktop einfuegen → sagen: <em>"Stage this room in modern style using immostage, here is the URL: ..."</em>
+    </div>
   </div>
+
+  <!-- Server Info -->
+  <div class="section">
+    <h2>MCP Endpoint</h2>
+    <div class="endpoint">POST https://mcp-immostage.vercel.app/api/mcp</div>
+    <ul class="tools">
+      <li><strong>stage_room</strong> — AI virtual staging for empty rooms</li>
+      <li><strong>beautify_floor_plan</strong> — 2D to 3D floor plan rendering</li>
+      <li><strong>classify_room</strong> — Room type + style detection</li>
+      <li><strong>optimize_listing</strong> — German property descriptions</li>
+      <li><strong>suggest_style</strong> — Staging style recommendations</li>
+    </ul>
+  </div>
+
+  <div class="links">
+    <a href="https://github.com/LarryWalkerDEV/mcp-immostage">GitHub</a> &middot;
+    <a href="https://immostage.ai">ImmoStage</a> &middot;
+    <a href="mailto:goertz@immostage.ai">Kontakt</a>
+  </div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+const loading = document.getElementById('loading');
+const error = document.getElementById('error');
+const result = document.getElementById('result');
+const urlBox = document.getElementById('urlBox');
+const copied = document.getElementById('copied');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('active'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('active');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+urlBox.addEventListener('click', () => {
+  navigator.clipboard.writeText(urlBox.textContent);
+  copied.style.display = 'block';
+  setTimeout(() => copied.style.display = 'none', 2000);
+});
+
+async function handleFile(file) {
+  if (!file.type.startsWith('image/')) { showError('Nur Bilder erlaubt'); return; }
+  if (file.size > 10 * 1024 * 1024) { showError('Max. 10 MB'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => { previewImg.src = e.target.result; preview.classList.add('show'); };
+  reader.readAsDataURL(file);
+
+  loading.classList.add('show');
+  error.classList.remove('show');
+  result.classList.remove('show');
+
+  try {
+    const base64 = await toBase64(file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_base64: base64 }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload fehlgeschlagen');
+    urlBox.textContent = data.url;
+    result.classList.add('show');
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    loading.classList.remove('show');
+  }
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showError(msg) { error.textContent = msg; error.classList.add('show'); }
+</script>
 </body>
 </html>
