@@ -11,3 +11,8 @@ ACTION-ITEMS-TODAY.md
 ARCHITECTURE.md
 PROJECT-PLAN.md
 CLAUDE.md
+.vercel
+.mcpregistry_github_token
+.mcpregistry_registry_token
+mcp-publisher.exe
+mcp-publisher.tar.gz
