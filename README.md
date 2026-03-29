@@ -6,6 +6,10 @@
 
 AI-powered virtual staging MCP server for real estate professionals. Stage empty rooms with photorealistic furniture, beautify floor plans into 3D renders, classify room images, generate German property descriptions, and get staging style recommendations — all through the Model Context Protocol. Built for Immobilienmakler, PropTech platforms, and real estate photographers in the DACH market.
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/larrywalkerdev-mcp-immostage).
+
 ## Quick Start
 
 Connect your MCP client to the ImmoStage server:
