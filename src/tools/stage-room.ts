@@ -1,111 +1,73 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import {
-  createStagingTask,
-  waitForTaskCompletion,
-  parseResultUrls,
-  categorizeKieError,
-} from '../lib/kie-client.js';
-import { uploadBase64Image } from '../lib/image-upload.js';
-import { STAGING_PROMPT_TEMPLATE } from '../lib/prompts.js';
-import { fetchImageAsBase64 } from '../lib/image-to-base64.js';
+import { callApp } from '../lib/app-client.js';
 
-export function registerStageRoom(server: McpServer) {
+/**
+ * stage_room — thin proxy to the ImmoStage app. All compute + billing happen
+ * server-side; the tool returns a download URL. The validated Bearer key is
+ * threaded in via createServer() (stateless per-request server).
+ */
+export function registerStageRoom(server: McpServer, apiKey: string) {
   server.tool(
     'stage_room',
-    'AI virtual staging - transform empty room photos into beautifully furnished spaces. Provide either a public image URL or a base64-encoded image.',
+    'Virtuelles Staging: verwandelt ein leeres Raumfoto in einen möblierten Raum. Benötigt den Namen der Immobilie (z. B. "Hubertstraße 10"), ein Bild (öffentliche URL oder Base64), Stil und Raumtyp. Gibt eine Download-URL zurück. Die ersten 3 Bilder sind kostenlos.',
     {
-      image_url: z.string().url().optional().describe('Public URL of the room image to stage'),
-      image_base64: z.string().optional().describe('Base64-encoded image data (with or without data URI prefix). Use this when the user pastes/uploads an image directly.'),
-      style: z
-        .enum(['modern', 'scandinavian', 'classic', 'minimal', 'luxury'])
-        .describe('Interior design style'),
+      property_name: z.string().describe('Name/Adresse der Immobilie, z. B. "Hubertstraße 10, Berlin"'),
+      image_url: z.string().url().optional().describe('Öffentliche URL des Raumfotos'),
+      image_base64: z.string().optional().describe('Base64-Bilddaten, wenn der Nutzer ein Bild direkt einfügt'),
+      style: z.enum(['modern', 'scandinavian', 'classic', 'minimal', 'luxury']).describe('Einrichtungsstil'),
       room_type: z
         .enum(['living_room', 'bedroom', 'kitchen', 'bathroom', 'office', 'other'])
-        .describe('Type of room'),
-      quality: z
-        .enum(['medium', 'high'])
-        .default('medium')
-        .describe('Output quality. medium=faster/cheaper, high=better detail'),
+        .describe('Raumtyp'),
     },
-    {
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: false,
-      openWorldHint: true,
-    },
-    async ({ image_url, image_base64, style, room_type, quality }) => {
-      const startTime = Date.now();
-      try {
-        // Resolve image URL — either provided directly or uploaded from base64
-        let resolvedUrl: string;
-        if (image_url) {
-          resolvedUrl = image_url;
-        } else if (image_base64) {
-          resolvedUrl = await uploadBase64Image(image_base64);
-        } else {
-          return {
-            content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Provide either image_url or image_base64' }) }],
-            isError: true,
-          };
-        }
-
-        const prompt = STAGING_PROMPT_TEMPLATE(style);
-        const taskId = await createStagingTask(prompt, resolvedUrl, '3:2', quality);
-        const status = await waitForTaskCompletion(taskId, 120000, 3000);
-
-        if (status.data.state === 'fail') {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: JSON.stringify({
-                error: 'Staging failed',
-                taskId,
-                failCode: status.data.failCode,
-                failMsg: status.data.failMsg,
-              }),
-            }],
-            isError: true,
-          };
-        }
-
-        const resultUrls = parseResultUrls(status);
-        const textContent = {
-          type: 'text' as const,
-          text: JSON.stringify({
-            taskId,
-            resultUrls,
-            style,
-            roomType: room_type,
-            quality,
-            processingTimeMs: Date.now() - startTime,
-          }),
-        };
-
-        // Try to fetch the first result image and return it inline as base64
-        const contentBlocks: Array<{ type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }> = [textContent];
-        if (resultUrls.length > 0) {
-          const inlineImage = await fetchImageAsBase64(resultUrls[0]);
-          if (inlineImage) {
-            contentBlocks.push({
-              type: 'image' as const,
-              data: inlineImage.data,
-              mimeType: inlineImage.mimeType,
-            });
-          }
-        }
-
-        return { content: contentBlocks };
-      } catch (error) {
-        const errorType = categorizeKieError(error as Error);
+    { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    async ({ property_name, image_url, image_base64, style, room_type }) => {
+      // 1) ensure project (= property listing)
+      const proj = await callApp<{ projectId?: string; error?: string }>(
+        '/api/mcp/project',
+        apiKey,
+        { name: property_name }
+      );
+      if (!proj.ok || !proj.data.projectId) {
         return {
-          content: [{
-            type: 'text' as const,
-            text: JSON.stringify({ error: (error as Error).message, errorType }),
-          }],
+          content: [{ type: 'text' as const, text: proj.data.error || 'Projekt konnte nicht angelegt werden.' }],
           isError: true,
         };
       }
+
+      // 2) stage
+      const stage = await callApp<{
+        downloadUrl?: string;
+        error?: string;
+        code?: string;
+        checkoutUrl?: string;
+      }>('/api/mcp/stage', apiKey, {
+        projectId: proj.data.projectId,
+        imageUrl: image_url,
+        imageBase64: image_base64,
+        style,
+        roomType: room_type,
+      });
+
+      if (stage.data.code === 'UPGRADE_REQUIRED') {
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `${stage.data.error}\n\nJetzt upgraden: ${stage.data.checkoutUrl || 'https://immostage.ai/preise'}`,
+            },
+          ],
+        };
+      }
+      if (!stage.ok || !stage.data.downloadUrl) {
+        return {
+          content: [{ type: 'text' as const, text: stage.data.error || 'Staging fehlgeschlagen.' }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: 'text' as const, text: `Fertig! Download: ${stage.data.downloadUrl}` }],
+      };
     }
   );
 }

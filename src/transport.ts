@@ -42,8 +42,8 @@ app.post('/api/mcp', async (req, res) => {
     return;
   }
 
-  // Create a fresh MCP server + stateless transport for each request
-  const server = createServer();
+  // Create a fresh MCP server + stateless transport for each request (thread the validated key)
+  const server = createServer(auth.apiKey!);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // Stateless — no session tracking
   });
