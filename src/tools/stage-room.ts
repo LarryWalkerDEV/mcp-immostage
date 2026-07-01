@@ -35,9 +35,10 @@ export function registerStageRoom(server: McpServer, apiKey: string) {
         };
       }
 
-      // 2) stage
+      // 2) stage (async — returns a jobId; poll with check_staging)
       const stage = await callApp<{
-        downloadUrl?: string;
+        jobId?: string;
+        status?: string;
         error?: string;
         code?: string;
         checkoutUrl?: string;
@@ -59,14 +60,19 @@ export function registerStageRoom(server: McpServer, apiKey: string) {
           ],
         };
       }
-      if (!stage.ok || !stage.data.downloadUrl) {
+      if (!stage.ok || !stage.data.jobId) {
         return {
           content: [{ type: 'text' as const, text: stage.data.error || 'Staging fehlgeschlagen.' }],
           isError: true,
         };
       }
       return {
-        content: [{ type: 'text' as const, text: `Fertig! Download: ${stage.data.downloadUrl}` }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `Staging gestartet (Auftrag ${stage.data.jobId}). Die Verarbeitung dauert i. d. R. 30–90 Sekunden. Rufe check_staging mit job_id="${stage.data.jobId}" auf, um die Download-URL zu erhalten.`,
+          },
+        ],
       };
     }
   );

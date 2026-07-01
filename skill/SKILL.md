@@ -26,8 +26,11 @@ user to the dashboard to create a new one.
 2. **Sammle pro Raum:** das Foto (öffentliche URL oder direkt eingefügtes Bild), den **Stil**
    (`modern`, `scandinavian`, `classic`, `minimal`, `luxury`) und den **Raumtyp**
    (`living_room`, `bedroom`, `kitchen`, `bathroom`, `office`, `other`).
-3. **Rufe `stage_room`** mit `property_name`, Bild, `style`, `room_type` auf.
-4. **Gib dem Nutzer die Download-URL** aus der Antwort. Biete an, weitere Räume zu stagen.
+3. **Rufe `stage_room`** mit `property_name`, Bild, `style`, `room_type` auf. Die Antwort enthält
+   eine `job_id` (Staging läuft asynchron, i. d. R. 30–90 s).
+4. **Rufe `check_staging`** mit der `job_id` auf. Kommt „Noch in Bearbeitung", nach ein paar
+   Sekunden erneut prüfen. Sobald die **Download-URL** kommt, gib sie dem Nutzer und biete an,
+   weitere Räume zu stagen.
 
 ## Billing — handle gracefully
 
