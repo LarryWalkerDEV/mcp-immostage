@@ -177,3 +177,116 @@ click blind.
   worth promoting into the repo CLAUDE.md / review checklist so every MCP
   text change gets it by default, not just issues where the founder remembers
   to paste it.
+
+## 2026-07-02 — Issue #5: OAuth resource server (RFC 9728) — Claude auto-discovers the app's sign-in, zero key-pasting
+
+**Goal:** Make the ImmoStage MCP connector installable in Claude with zero
+manual key-pasting: when a user adds the connector without credentials, the
+server (as OAuth resource server per RFC 9728) advertises where the app's
+OAuth authorization server lives, so Claude auto-discovers it and opens the
+sign-in popup — turning connector installation itself into a self-serve
+trial-start funnel instead of a copy-an-API-key chore.
+
+**Matched skills:** `[]` (none — auth/routing infra, repo-grounded research only).
+
+### Fixed cross-repo contract (app side = immostage-3d issue #28, built in parallel — mock in tests, do NOT change paths or token format)
+
+- AS metadata lives at `https://app.immostage.ai/.well-known/oauth-authorization-server` (RFC 8414; endpoints `/mcp/authorize`, `/api/mcp/oauth/token`, `/api/mcp/oauth/register`, PKCE S256).
+- OAuth access tokens look like `mcp_oauth_<random>` and are validated by the app exactly like `mcp_live_` keys (sha256 row in the app's `mcp_api_keys`). This repo keeps passing the Bearer through unchanged.
+
+### Playbook structure
+
+1. Serve `GET /.well-known/oauth-protected-resource` (RFC 9728 JSON):
+   `resource` = the MCP server URL (`https://mcp-immostage.vercel.app`),
+   `authorization_servers: ["https://app.immostage.ai"]`. Vercel routing
+   (`vercel.json` rewrite/headers or a small `api/` function) must actually
+   serve the path in prod — the repo is static-`public/` + `api/` functions,
+   there is no framework router.
+2. Unauthenticated MCP requests return 401 with
+   `WWW-Authenticate: Bearer resource_metadata="https://mcp-immostage.vercel.app/.well-known/oauth-protected-resource"`
+   — this header is what triggers Claude's OAuth discovery. The exact
+   insertion point is the existing 401 branch in `api/mcp.ts` (~line 32).
+3. No auth-logic change: `validateApiKey` stays presence-check-only; both
+   `mcp_live_` and `mcp_oauth_` Bearers pass through to the app unchanged.
+4. Unit tests: metadata endpoint returns valid RFC 9728 JSON; 401 carries the
+   WWW-Authenticate header. `npx tsc --noEmit` exit 0.
+5. Guardrails: German user-facing strings; do not register the deferred
+   Phase-F tools; Makler acceptance gate pinned on the issue (judge as a
+   German Immobilienmakler, Sie-Form, no anglicisms; borderline = not
+   approved, max 3 iterations).
+
+### Success criteria
+
+- `GET /.well-known/oauth-protected-resource` served in prod (Vercel routing verified, not just local) with `resource` + `authorization_servers` per RFC 9728.
+- Unauthenticated MCP request → 401 + `WWW-Authenticate: Bearer resource_metadata="..."` header.
+- Bearer pass-through unchanged for both token prefixes; no server-side validation added.
+- Unit tests green (metadata JSON shape + 401 header); `npx tsc --noEmit` exit 0.
+
+### Validated repo facts (reusable for future auth/routing issues in this repo)
+
+- **Auth is prefix-blind by design:** `src/middleware/auth.ts`
+  `validateApiKey()` only checks for a non-empty `Bearer` value; the app
+  (`/api/mcp/*`) is the real authority (tenant resolution + billing). That is
+  why `mcp_oauth_` tokens need ZERO changes in this repo — the whole
+  "resource server" reduces to one metadata document + one response header.
+- **The 401 to decorate is in `api/mcp.ts`** (single handler, ~line 32:
+  `res.status(401).json({ error: auth.error })`). Note the handler also
+  returns 405 for non-POST and 204 for OPTIONS before auth runs — only the
+  401 path needs (and per RFC 9728 gets) the `WWW-Authenticate` header.
+- **Routing surface is `vercel.json`, not a framework:** `outputDirectory:
+  "public"` (static), one rewrite (`/` → `/index.html`), per-path `headers`
+  blocks, and `api/*.ts` functions. A new well-known path must be wired here
+  explicitly; an extensionless static file under `public/.well-known/` risks
+  a wrong Content-Type — an `api/` function or rewrite + headers entry is the
+  controllable option. (No Next middleware here, so immoapp's trailing-slash
+  308 trap on `/.well-known/*` does NOT apply in this repo — but it DOES
+  apply on the app side of the handshake; see immoapp findings issue #28.)
+- **CORS is declared twice** (defense in depth): `vercel.json` headers block
+  for `/api/mcp` AND `setHeader` calls inside `api/mcp.ts`. Any new
+  cross-origin-relevant header (e.g. exposing `WWW-Authenticate`) must be
+  added in both places or they drift.
+- **Companion findings live in immoapp** `docs/research/findings-backend-infra.md`
+  (issue #28 section): AS-side contract, `mcp_api_keys` hash-lookup resolver,
+  and the well-known 308 deployment trap.
+
+### Critic opportunities / surprises (including NOT implemented this round — pick these up later)
+
+- **Surprise (scope insight):** because auth here is a presence check and the
+  app's key resolver is hash-lookup/prefix-blind, "become an OAuth resource
+  server" is a ~zero-token-code change: one JSON document + one header. Future
+  credential-type additions should expect the same shape — if a change in this
+  repo wants token logic, that is a design smell (authority belongs app-side).
+- **Surprise (verification trap):** everything about this issue passes locally
+  while being broken in prod if `vercel.json` routing doesn't actually serve
+  the well-known path — same "only the live connector handshake fails" class
+  as the app-side 308 trap. Acceptance must include a prod (or preview) curl
+  of the metadata URL and of the 401 header, not just unit tests.
+- **Opportunity (not implemented):** browser-based MCP clients can only read
+  `WWW-Authenticate` cross-origin if it's in `Access-Control-Expose-Headers`
+  (currently only `Mcp-Session-Id` is exposed, in both CORS declarations).
+  Add when a browser client matters.
+- **Opportunity (not implemented):** the `resource` URL is hardcoded to
+  `mcp-immostage.vercel.app`. A move to a custom domain (e.g.
+  mcp.immostage.ai) silently breaks the RFC 9728 `resource` ↔ actual-URL
+  match — derive from the request Host or an env var when the domain changes.
+- **Opportunity (not implemented):** no `scopes_supported` in the metadata —
+  mirrors the app side's no-scopes v1 (an OAuth token grants full tenant
+  access). Add together with app-side scopes.
+- **Opportunity (not implemented, cross-cutting):** this is the third
+  cross-repo fixed contract (#25/#27 `skipped[]`, #28/#5 OAuth) with no
+  mechanical drift check — a shared contract fixture or staging smoke test
+  covering discovery (metadata fetch → 401 header → AS metadata fetch) would
+  catch either side changing shape.
+- **Opportunity (not implemented):** conversion instrumentation — the point is
+  install→trial-start; without an analytics event distinguishing OAuth-token
+  usage from pasted-key usage (app side owns the data: `label` column on
+  `mcp_api_keys`), funnel impact is unmeasurable.
+
+*Provenance note: playbook/critic content reconstructed at store-time from the
+issue #5 body (contract + acceptance criteria + guardrails), the pinned Makler
+acceptance-gate comment, direct repo inspection (`api/mcp.ts`,
+`src/middleware/auth.ts`, `vercel.json`), and the companion immoapp issue #28
+findings; recorded before the build landed (branch
+`feat/issue-5-oauth-discovery` existed with no commits ahead of master at
+store time), so "not implemented" flags reflect playbook scope, not a shipped
+diff.*
