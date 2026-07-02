@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { callApp } from '../lib/app-client.js';
+import { callApp, APP_URL } from '../lib/app-client.js';
 
 /**
  * get_download_link — returns the customer-facing download website for a property.
@@ -11,7 +11,7 @@ import { callApp } from '../lib/app-client.js';
 export function registerDownloadLink(server: McpServer, apiKey: string) {
   server.tool(
     'get_download_link',
-    'Erstellt die Download-Website für eine Immobilie: eine Seite mit allen erstellten Assets (Staging-Bilder usw.) und einem ZIP-Download in strukturierten Ordnern. Der Link ist 3 Tage gültig. Rufe dies auf, wenn der Nutzer alle Ergebnisse einer Immobilie herunterladen möchte.',
+    'Erstellt die Download-Website für eine Immobilie: eine Seite mit allen erstellten Assets (Staging-Bilder usw.) und einem ZIP-Download in strukturierten Ordnern. Der Link ist 3 Tage gültig; zusätzlich wird der dauerhafte Link zum ImmoStage-Dashboard des Projekts zurückgegeben. Rufe dies auf, wenn der Nutzer alle Ergebnisse einer Immobilie herunterladen möchte.',
     {
       property_name: z.string().describe('Name/Adresse der Immobilie, wie bei stage_room verwendet'),
     },
@@ -39,11 +39,12 @@ export function registerDownloadLink(server: McpServer, apiKey: string) {
           isError: true,
         };
       }
+      const dashboardUrl = `${APP_URL}/projects/${proj.data.projectId}`;
       return {
         content: [
           {
             type: 'text' as const,
-            text: `Alle Assets für „${property_name}" hier herunterladen (3 Tage gültig):\n${share.data.shareUrl}\n\nAuf der Seite auf „Alle Assets herunterladen (ZIP)" klicken — die Dateien sind in Ordnern strukturiert.`,
+            text: `Alle Assets für „${property_name}" hier herunterladen (3 Tage gültig):\n${share.data.shareUrl}\n\nAuf der Seite auf „Alle Assets herunterladen (ZIP)" klicken — die Dateien sind in Ordnern strukturiert.\n\nDauerhaft verfügbar in Ihrem ImmoStage-Dashboard: ${dashboardUrl} (Login erforderlich). Der Download-Link oben läuft nach 3 Tagen ab.`,
           },
         ],
       };

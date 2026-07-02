@@ -10,7 +10,7 @@ import { callApp } from '../lib/app-client.js';
 export function registerStageRoom(server: McpServer, apiKey: string) {
   server.tool(
     'stage_room',
-    'Virtuelles Staging: verwandelt ein leeres Raumfoto in einen möblierten Raum. Benötigt den Namen der Immobilie (z. B. "Hubertstraße 10"), ein Bild (öffentliche URL oder Base64), Stil und Raumtyp. Gibt eine Download-URL zurück. Die ersten 3 Bilder sind kostenlos.',
+    'Virtuelles Staging: verwandelt ein leeres Raumfoto in einen möblierten Raum. Benötigt den Namen der Immobilie (z. B. "Hubertstraße 10"), ein Bild (öffentliche URL oder Base64), Stil und Raumtyp. Gibt eine Download-URL zurück. Jedes Konto enthält 3 kostenlose Bilder.',
     {
       property_name: z.string().describe('Name/Adresse der Immobilie, z. B. "Hubertstraße 10, Berlin"'),
       image_url: z.string().url().optional().describe('Öffentliche URL des Raumfotos'),
