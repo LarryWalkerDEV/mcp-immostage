@@ -5,7 +5,7 @@ dist/
 *.log
 .vercel/
 .claude/
-research/
+/research/
 custom-gpts/
 ACTION-ITEMS-TODAY.md
 ARCHITECTURE.md
