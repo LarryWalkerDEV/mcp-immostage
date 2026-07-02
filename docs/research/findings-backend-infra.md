@@ -4,6 +4,70 @@ Compounding store of validated research findings from issues in category
 `backend/infra`. Read this before re-deriving repo facts for a new issue in
 this category. Append a new dated section per issue; never rewrite history.
 
+## 2026-07-01 — Issue #3: check_staging returns staged image inline (restored)
+
+> NOTE: the original section was clobbered in a parallel-write race (commit
+> `eda91a6` carries the issue-#3 message but issue-#4 content). Restored from
+> the issue, the commit message, and the repo. Reduced fidelity: the critic's
+> full opportunity list from that round was lost.
+
+**Goal:** When a staging job completes, `check_staging` shows the staged image
+directly in the Claude conversation (MCP `{type:'image'}` content block) PLUS
+the existing download-URL text — instead of a URL-only string the Makler has to
+click blind.
+
+**Matched skills:** `[]`.
+
+### Playbook structure
+
+1. Reuse the in-repo inline-image pattern: the UNREGISTERED
+   `src/tools/floor-plan.ts` (~lines 75-86) already fetches the result and
+   returns `{type:'image', data, mimeType}` via `fetchImageAsBase64` from
+   `src/lib/image-to-base64.ts`. Apply the same pattern to `check_staging`'s
+   completed branch.
+2. Preview budget: base64 data <= ~1 MB; if the original is bigger, fetch a
+   downscaled variant (Supabase Storage image-transform `?width=1024` or an
+   app-provided thumbnail) — the budget is the gate, mechanism is builder's
+   choice.
+3. Graceful degradation: if the image fetch fails, fall back to today's
+   text-only response — never fail the tool because the preview failed.
+   In-progress and failed states unchanged (text-only).
+4. Unit tests: mocked completed-status response asserts image block + text
+   block; mocked fetch failure asserts text-only fallback.
+
+### Success criteria
+
+- Completed job returns `[{type:'image', data:<base64>, mimeType:'image/jpeg'}, {type:'text', text:'Fertig! Download: <url>...'}]`.
+- Base64 payload <= ~1 MB; fetch failure degrades to text-only; other states unchanged.
+- `npx tsc --noEmit` exit 0; German text; Phase-F tools stay unregistered.
+
+### Validated repo facts (reusable)
+
+- **Inline-image history:** `acfda76` added inline base64 staged images; the
+  thin-proxy rewrite `79a0762` (URL-only return) removed them. Issue #3
+  reinstates the preview WITH a size budget, on top of the proxy architecture.
+- **`fetchImageAsBase64(url): Promise<Base64Image | null>`** in
+  `src/lib/image-to-base64.ts` is the existing helper; returns null on failure
+  (maps directly onto the graceful-degradation requirement).
+- **Registered vs. exported tools differ:** `src/tools/index.ts` exports more
+  than `createServer()` registers — the unregistered Phase-F tools are the
+  place to mine patterns from, but must not be registered (unbilled kie.ai
+  cost leak).
+- **`.gitignore` gotcha:** the repo ignored `research/` unanchored, which also
+  ignored `docs/research/`. Fixed in `eda91a6` by anchoring to `/research/`.
+  If a docs file mysteriously will not stage, check ignore anchoring first.
+
+### Critic opportunities / surprises (partially lost)
+
+- **Surprise:** the "new" feature already existed twice — first shipped
+  (`acfda76`), then removed by an architecture change (`79a0762`), pattern
+  preserved only in an unregistered tool. Grep git history before building.
+- **Process surprise (from this restoration):** two memory agents appending to
+  the same findings file in parallel worktrees WILL race — same failure already
+  documented in immoapp (`884d1a21`). Appenders must re-read the committed
+  file immediately before writing and never use overwrite-writes on a shared
+  store.
+
 ## 2026-07-01 — Issue #4: Truthful server instructions, uniform quota wording, surface skipped features
 
 **Goal:** Make the ImmoStage MCP server describe itself truthfully — its instructions currently promise "Social-Media-Kit/Video in Kürze" while simultaneously telling the model to call `generate_marketing` which already delivers them, and quota wording must uniformly say "3 kostenlose Bilder" — and turn silent plan-gated feature skips (e.g. video on trial/starter) into an explicit German upgrade hint with checkout URL. Net effect: a German Immobilienmakler using the connector is never misled about what exists, never waits for a video that will silently never arrive, and every denial becomes a transparent upsell moment.
@@ -105,4 +169,11 @@ this category. Append a new dated section per issue; never rewrite history.
   `get_download_link` must present BOTH delivery channels — the 3-day share
   URL (instant, forwardable to the seller) AND the permanent dashboard home
   `https://app.immostage.ai/projects/<projectId>` ("Login erforderlich",
-  note the 3-day expiry of the first link). If `/api/mcp/share` doesn'
+  note the 3-day expiry of the first link). If `/api/mcp/share` does not
+  return the project id yet, coordinate app-side; acceptance = both URLs in
+  the final tool text + unit test asserting both lines.
+- **Opportunity (not implemented):** the Makler acceptance gate (review
+  through the eyes of a paying DACH agent) was added as a per-issue comment —
+  worth promoting into the repo CLAUDE.md / review checklist so every MCP
+  text change gets it by default, not just issues where the founder remembers
+  to paste it.
