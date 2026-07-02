@@ -1,4 +1,4 @@
-const APP_URL = process.env.APP_URL || 'https://app.immostage.ai';
+export const APP_URL = process.env.APP_URL || 'https://app.immostage.ai';
 
 /**
  * Server-to-server call into the ImmoStage app's /api/mcp/* endpoints,
