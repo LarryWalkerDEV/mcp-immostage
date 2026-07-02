@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApp } from '../lib/app-client.js';
+import { fetchImageAsBase64 } from '../lib/image-to-base64.js';
 
 /**
  * check_staging — returns the download URL for a staging job once it is ready.
@@ -28,6 +29,19 @@ export function registerCheckStaging(server: McpServer, apiKey: string) {
         };
       }
       if (res.data.status === 'completed' && res.data.downloadUrl) {
+        // Inline preview (image first, then text). Null-guard pattern from floor-plan.ts.
+        // ponytail: preview relies on the app returning <=800KB Supabase 'staged' JPEGs
+        // (persisted by /api/mcp/status); ceiling = raw kie URLs (1.7-2MB PNGs) degrade
+        // to text-only; upgrade path = pure-JS resize in this repo.
+        const img = await fetchImageAsBase64(res.data.downloadUrl);
+        if (img) {
+          return {
+            content: [
+              { type: 'image' as const, data: img.data, mimeType: img.mimeType },
+              { type: 'text' as const, text: `Fertig! Download: ${res.data.downloadUrl}` },
+            ],
+          };
+        }
         return { content: [{ type: 'text' as const, text: `Fertig! Download: ${res.data.downloadUrl}` }] };
       }
       if (res.data.status === 'failed') {
