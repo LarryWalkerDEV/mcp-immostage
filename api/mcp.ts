@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
-  res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
+  res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id, WWW-Authenticate');
 
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -29,6 +29,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Auth check (mandatory — the app is the real authority for billing)
     const auth = validateApiKey(req.headers.authorization as string | undefined);
     if (!auth.valid) {
+      // RFC 9728: point OAuth-capable clients (Claude) at the resource metadata
+      res.setHeader(
+        'WWW-Authenticate',
+        `Bearer resource_metadata="https://${req.headers.host}/.well-known/oauth-protected-resource"`
+      );
       res.status(401).json({ error: auth.error });
       return;
     }
