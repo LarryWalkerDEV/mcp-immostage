@@ -10,14 +10,19 @@ servers; you only collect inputs and hand back a download URL. Always respond in
 
 ## Setup (guide the user if the connector is missing)
 
+**Claude Desktop, claude.ai, Claude Cowork (empfohlen):**
 1. Konto auf https://immostage.ai erstellen (3 kostenlose Bilder).
-2. Im Dashboard unter **Einstellungen → Claude / MCP Zugang** einen Schlüssel erstellen.
-3. In Claude einen Custom Connector hinzufügen:
-   - URL: `https://mcp-immostage.vercel.app/api/mcp`
-   - Authentifizierung: Bearer-Token = der `mcp_live_…`-Schlüssel aus dem Dashboard.
+2. In Claude einen Custom Connector hinzufügen: URL `https://mcp-immostage.vercel.app/api/mcp`.
+3. Mit dem ImmoStage-Konto anmelden — Claude übernimmt die Authentifizierung automatisch
+   (OAuth). Kein Schlüssel nötig.
 
-If a tool call returns "Ungültiger Zugang", the key is missing, wrong, or revoked — point the
-user to the dashboard to create a new one.
+**Claude Code (CLI):** benötigt stattdessen einen Bearer-Schlüssel: Dashboard →
+**Einstellungen → Claude / MCP Zugang** → Schlüssel erstellen, dann als
+`Authorization: Bearer mcp_live_…`-Header verwenden.
+
+If a tool call returns "Ungültiger Zugang", the OAuth-Anmeldung ist abgelaufen oder der
+CLI-Schlüssel ist ungültig/widerrufen — bei OAuth erneut anmelden lassen, bei der CLI auf das
+Dashboard verweisen, um einen neuen Schlüssel zu erstellen.
 
 ## Optionen anbieten
 
