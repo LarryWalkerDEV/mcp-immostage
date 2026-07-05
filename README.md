@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-AI-powered virtual staging MCP server for real estate professionals. Stage empty rooms with photorealistic furniture, beautify floor plans into 3D renders, classify room images, generate German property descriptions, and get staging style recommendations — all through the Model Context Protocol. Built for Immobilienmakler, PropTech platforms, and real estate photographers in the DACH market.
+AI-powered virtual staging MCP server for real estate professionals. Stage empty rooms with photorealistic furniture, then generate a full marketing package (social media posts, an Exposé PDF, and a property video) — all through the Model Context Protocol. Built for Immobilienmakler, PropTech platforms, and real estate photographers in the DACH market.
 
 ## Quick Start
 
@@ -29,57 +29,85 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Contact [goerz@immostage.ai](mailto:goerz@immostage.ai) for API access.
+Or install via the Claude Code CLI:
+
+```
+claude mcp add --transport http immostage https://mcp.immostage.ai/api/mcp --header "Authorization: Bearer YOUR_KEY"
+```
+
+### Getting an API Key
+
+Self-service — no need to contact anyone. Create your Bearer key at [app.immostage.ai](https://app.immostage.ai), under **Einstellungen → "Claude / MCP Zugang"**.
+
+The first **3 staging images per account are free**. After that, pick a plan:
+
+| Plan | Price |
+|------|-------|
+| Einzel | 29 € einmalig |
+| Starter | 49 € / Monat |
+| Pro | 199 € / Monat, unbegrenzt |
 
 ## Tools
 
-| Tool | Description | Cost | Latency |
-|------|-------------|------|---------|
-| `stage_room` | AI virtual staging — transform empty room photos into beautifully furnished spaces | Uses credits | ~20-40s |
-| `beautify_floor_plan` | Transform 2D floor plans into 3D isometric architectural renders | Uses credits | ~20-40s |
-| `classify_room` | Classify room images: type, empty/furnished, quality score, style suggestion | Free | ~2s |
-| `optimize_listing` | Generate professional German property descriptions from basic listing data | Free | ~3s |
-| `suggest_style` | Get staging style recommendation based on room type and target audience | Free | Instant |
+Call these in order: `stage_room` → `check_staging` → (optional) `generate_marketing` → `get_download_link`.
+
+| Tool | Description | Latency |
+|------|-------------|---------|
+| `stage_room` | Submits an empty-room photo for AI virtual staging. Returns a `job_id` to poll. | Async, ~30-90s |
+| `check_staging` | Polls a staging job by `job_id`. Returns the staged image (inline preview) and its download URL once ready. | Poll until done |
+| `generate_marketing` | Generates the full marketing package from staged rooms: 6 social media posts, an Exposé (PDF), and a property video (video requires the Pro plan). | Async, minutes |
+| `get_download_link` | Returns the download page for a property: all generated assets as a ZIP (valid 3 days), plus a permanent dashboard link. | Instant |
+
+> **Roadmap:** Floor-plan beautification, room classification, listing-copy optimization, and style suggestion are planned for a future release and are not yet registered as callable tools.
 
 ## Usage Examples
 
-### Stage an empty living room
+### Stage an empty room
 
 ```
 Stage this room in modern style: https://example.com/empty-living-room.jpg
 ```
 
 The `stage_room` tool accepts:
-- `image_url` — Public URL to the room image (JPEG/PNG)
-- `style` — Staging style: `modern`, `skandinavisch`, `luxus`, `minimalistisch`, `boho`, `landhausstil`
-- `room_type` — Room type: `wohnzimmer`, `schlafzimmer`, `kueche`, `bad`, `buero`, `kinderzimmer`, `flur`
-- `quality` — Output quality: `draft` (fast) or `high` (detailed)
+- `property_name` — Name/address of the property, e.g. `"Hubertstraße 10, Berlin"`
+- `image_url` — Public URL to the room photo (or `image_base64` to paste an image directly)
+- `style` — `modern`, `scandinavian`, `classic`, `minimal`, or `luxury`
+- `room_type` — `living_room`, `bedroom`, `kitchen`, `bathroom`, `office`, or `other`
 
-Returns staged image URLs ready for download or embedding.
+Returns a `job_id` — poll it with `check_staging` until the staged image is ready.
 
-### Classify then stage
-
-```
-First classify this room image, then stage it with the recommended style:
-https://example.com/room-photo.jpg
-```
-
-The agent will:
-1. Call `classify_room` to detect room type and suggest a style
-2. Call `stage_room` with the detected room type and suggested style
-
-### Optimize a property listing
+### Check a staging job
 
 ```
-Write a listing description for a 3-room apartment in Berlin-Mitte,
-85m2, balcony, built 1998, renovated 2023, asking price 420,000 EUR.
+Check the status of job abc123
 ```
 
-The `optimize_listing` tool generates:
-- Professional German property description (Exposé-ready)
-- TLDR summary
-- Key feature highlights
-- SEO-optimized text
+The `check_staging` tool accepts:
+- `job_id` — the job ID returned by `stage_room`
+
+Returns the staged image inline (once ready) plus its download URL, or a "still processing" message to poll again.
+
+### Generate the marketing package
+
+```
+Generate the marketing package for Hubertstraße 10, Berlin
+```
+
+The `generate_marketing` tool accepts:
+- `property_name` — same property name used with `stage_room`
+
+Starts async generation of 6 social media posts, an Exposé (PDF), and a property video (the video requires the Pro plan; other plans get an upgrade link instead). Call `get_download_link` afterward to retrieve the assets.
+
+### Get the download link
+
+```
+Get the download link for Hubertstraße 10, Berlin
+```
+
+The `get_download_link` tool accepts:
+- `property_name` — same property name used with `stage_room`
+
+Returns a share link (valid 3 days) to a page with all assets bundled as a ZIP, plus a permanent link to the ImmoStage dashboard.
 
 ## Authentication
 
@@ -89,13 +117,13 @@ All requests require a Bearer token in the Authorization header:
 Authorization: Bearer YOUR_API_KEY
 ```
 
-Contact [goerz@immostage.ai](mailto:goerz@immostage.ai) for API access. Free tier includes 10 staging credits for testing.
+Create your key at [app.immostage.ai](https://app.immostage.ai) → Einstellungen → "Claude / MCP Zugang" (see [Getting an API Key](#getting-an-api-key) above). The first 3 staging images per account are free.
 
 ## Rate Limits
 
 - **100 requests/minute** per API key
 - Rate limit headers included in responses (`X-RateLimit-Remaining`)
-- Staging and floor plan tools consume credits based on your plan
+- Staging and marketing-package generation consume credits based on your plan
 
 ## Links
 
