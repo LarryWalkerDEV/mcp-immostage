@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.LarryWalkerDEV/immostage",
   "title": "ImmoStage Virtual Staging",
-  "description": "AI virtual staging for real estate — stage rooms, beautify floor plans, classify images.",
+  "description": "AI virtual staging for real estate — stage rooms and generate marketing packages via MCP.",
   "version": "1.0.0",
   "repository": {
     "url": "https://github.com/LarryWalkerDEV/mcp-immostage",
@@ -15,7 +15,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer API key for authentication. Contact goerz@immostage.ai for access.",
+          "description": "Bearer API key for authentication. Create one at app.immostage.ai → Einstellungen → \"Claude / MCP Zugang\".",
           "isRequired": true,
           "isSecret": true
         }
