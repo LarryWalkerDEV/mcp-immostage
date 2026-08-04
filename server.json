@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.LarryWalkerDEV/immostage",
   "title": "ImmoStage Virtual Staging",
-  "description": "AI virtual staging for real estate — stage rooms and generate marketing packages via MCP.",
+  "description": "AI virtual staging for real estate (DACH) — stage empty rooms, beautify floor plans and generate marketing packages via MCP. Connect with OAuth 2.0, no API key or sign-up e-mail required.",
   "version": "1.0.0",
   "repository": {
     "url": "https://github.com/LarryWalkerDEV/mcp-immostage",
@@ -15,8 +15,8 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer API key for authentication. Create one at app.immostage.ai → Einstellungen → \"Claude / MCP Zugang\".",
-          "isRequired": true,
+          "description": "Optional. Claude, ChatGPT and other MCP clients can connect WITHOUT this header: the server answers 401 with a WWW-Authenticate/RFC 9728 pointer and the client registers itself via OAuth 2.0 dynamic client registration — no key, no e-mail, no approval. Use a Bearer key only for scripts and CI. Self-service key at app.immostage.ai -> Einstellungen -> \"Claude / MCP Zugang\".",
+          "isRequired": false,
           "isSecret": true
         }
       ]
